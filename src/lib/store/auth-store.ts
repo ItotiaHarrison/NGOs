@@ -15,6 +15,7 @@ interface AuthState {
     setUser: (user: User | null) => void;
     setLoading: (loading: boolean) => void;
     logout: () => void;
+    fetchUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -23,4 +24,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     setUser: (user) => set({ user, isLoading: false }),
     setLoading: (loading) => set({ isLoading: loading }),
     logout: () => set({ user: null }),
+    fetchUser: async () => {
+        try {
+            const response = await fetch('/api/auth/me');
+            if (response.ok) {
+                const data = await response.json();
+                set({ user: data.user, isLoading: false });
+            }
+        } catch (error) {
+            console.error('Failed to fetch user:', error);
+        }
+    },
 }));

@@ -1,27 +1,32 @@
-import { PayPalHttpClient, core } from '@paypal/paypal-server-sdk';
+import {
+    Client,
+    Environment,
+    OrdersController,
+    CheckoutPaymentIntent,
+    OrderApplicationContextLandingPage,
+    OrderApplicationContextUserAction
+} from '@paypal/paypal-server-sdk';
 
-// PayPal Configuration
-const environment = process.env.PAYPAL_MODE === 'production'
-    ? new core.LiveEnvironment(
-        process.env.PAYPAL_CLIENT_ID!,
-        process.env.PAYPAL_CLIENT_SECRET!
-    )
-    : new core.SandboxEnvironment(
-        process.env.PAYPAL_CLIENT_ID!,
-        process.env.PAYPAL_CLIENT_SECRET!
-    );
-
-let client: PayPalHttpClient | null = null;
+let client: Client | null = null;
 
 /**
  * Get PayPal client instance
  */
-export function getPayPalClient(): PayPalHttpClient {
+export function getPayPalClient(): Client {
     if (!client) {
         if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
             throw new Error('PayPal credentials not configured');
         }
-        client = new PayPalHttpClient(environment);
+
+        client = new Client({
+            clientCredentialsAuthCredentials: {
+                oAuthClientId: process.env.PAYPAL_CLIENT_ID,
+                oAuthClientSecret: process.env.PAYPAL_CLIENT_SECRET,
+            },
+            environment: process.env.PAYPAL_MODE === 'production'
+                ? Environment.Production
+                : Environment.Sandbox,
+        });
     }
     return client;
 }
@@ -49,37 +54,42 @@ interface CreateOrderResponse {
  */
 export async function createPayPalOrder(request: CreateOrderRequest): Promise<CreateOrderResponse> {
     try {
+        const client = getPayPalClient();
+        const ordersController = new OrdersController(client);
+
         const orderRequest = {
-            intent: 'CAPTURE',
-            purchase_units: [
-                {
-                    amount: {
-                        currency_code: request.currency || 'USD',
-                        value: request.amount.toFixed(2),
+            body: {
+                intent: CheckoutPaymentIntent.Capture,
+                purchaseUnits: [
+                    {
+                        amount: {
+                            currencyCode: request.currency || 'USD',
+                            value: request.amount.toFixed(2),
+                        },
+                        description: request.description,
                     },
-                    description: request.description,
+                ],
+                applicationContext: {
+                    returnUrl: request.returnUrl,
+                    cancelUrl: request.cancelUrl,
+                    brandName: 'Daraja Directory',
+                    landingPage: OrderApplicationContextLandingPage.Billing,
+                    userAction: OrderApplicationContextUserAction.PayNow,
                 },
-            ],
-            application_context: {
-                return_url: request.returnUrl,
-                cancel_url: request.cancelUrl,
-                brand_name: 'Daraja Directory',
-                landing_page: 'BILLING',
-                user_action: 'PAY_NOW',
             },
         };
 
-        const client = getPayPalClient();
-        const response = await client.execute({
-            path: '/v2/checkout/orders',
-            verb: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: orderRequest,
-        });
+        const response = await ordersController.createOrder(orderRequest);
 
-        return response.result as CreateOrderResponse;
+        return {
+            id: response.result.id || '',
+            status: response.result.status || '',
+            links: (response.result.links || []).map(link => ({
+                href: link.href || '',
+                rel: link.rel || '',
+                method: link.method || '',
+            })),
+        };
     } catch (error: any) {
         console.error('PayPal create order error:', error);
         throw new Error('Failed to create PayPal order');
@@ -92,12 +102,10 @@ export async function createPayPalOrder(request: CreateOrderRequest): Promise<Cr
 export async function capturePayPalOrder(orderId: string) {
     try {
         const client = getPayPalClient();
-        const response = await client.execute({
-            path: `/v2/checkout/orders/${orderId}/capture`,
-            verb: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+        const ordersController = new OrdersController(client);
+
+        const response = await ordersController.captureOrder({
+            id: orderId,
         });
 
         return response.result;
@@ -113,9 +121,10 @@ export async function capturePayPalOrder(orderId: string) {
 export async function getPayPalOrderDetails(orderId: string) {
     try {
         const client = getPayPalClient();
-        const response = await client.execute({
-            path: `/v2/checkout/orders/${orderId}`,
-            verb: 'GET',
+        const ordersController = new OrdersController(client);
+
+        const response = await ordersController.getOrder({
+            id: orderId,
         });
 
         return response.result;
