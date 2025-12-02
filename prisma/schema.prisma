@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PUBLIC
+  NGO_USER
+  ADMIN
+}
+
+enum OrganizationTier {
+  BASIC_FREE
+  SELF_ASSESSMENT
+  DARAJA_VERIFIED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  VERIFIED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  role          UserRole  @default(NGO_USER)
+  isVerified    Boolean   @default(false)
+  verificationToken String?
+  resetToken    String?
+  resetTokenExpiry DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  organization  Organization?
+  
+  @@index([email])
+}
+
+model Organization {
+  id                String              @id @default(cuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name              String
+  slug              String              @unique
+  logo              String?
+  description       String              @db.Text
+  website           String?
+  email             String
+  phone             String
+  
+  // Location
+  county            String
+  subCounty         String?
+  address           String?
+  
+  // Organization Details
+  registrationNumber String?
+  yearEstablished   Int?
+  staffSize         String?
+  annualBudget      String?
+  
+  // Sectors & SDGs
+  sectors           String[]
+  sdgs              Int[]
+  
+  // Tier & Verification
+  tier              OrganizationTier    @default(BASIC_FREE)
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedAt        DateTime?
+  
+  // Documents
+  documents         Document[]
+  
+  // Metadata
+  viewCount         Int                 @default(0)
+  featured          Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  payments          Payment[]
+  
+  @@index([slug])
+  @@index([county])
+  @@index([tier])
+  @@index([verificationStatus])
+  @@index([sectors])
+}
+
+model Document {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  name            String
+  type            String
+  url             String
+  size            Int
+  uploadedAt      DateTime     @default(now())
+  
+  @@index([organizationId])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  amount          Float
+  currency        String        @default("KES")
+  paymentMethod   String        // MPESA or PAYPAL
+  transactionId   String?       @unique
+  status          PaymentStatus @default(PENDING)
+  tier            OrganizationTier
+  
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([organizationId])
+  @@index([transactionId])
+}

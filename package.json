@@ -6,22 +6,43 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset",
+    "setup": "npm install && npx prisma generate && npx prisma migrate dev --name init",
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
+    "@paypal/checkout-server-sdk": "^1.0.3",
+    "@paypal/paypal-server-sdk": "^2.0.0",
+    "axios": "^1.13.2",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^17.2.3",
+    "jsonwebtoken": "^9.0.2",
     "next": "16.0.6",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.54.2",
+    "zod": "^3.24.1",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@prisma/client": "^5.22.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "babel-plugin-react-compiler": "1.0.0",
+    "babel-plugin-react-compiler": "^19.0.0-beta-df7b47d-20241124",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
-    "tailwindcss": "^4",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

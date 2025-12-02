@@ -1,36 +1,194 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Daraja Directory - NGO/CBO Platform
+
+A comprehensive web platform connecting Kenyan NGOs and CBOs with funders through verified listings, advanced search, and secure payment integration.
+
+## Phase 1 - Foundation (COMPLETED)
+
+✅ Project setup with Next.js 14, TypeScript, Tailwind CSS
+✅ Database schema with Prisma (PostgreSQL)
+✅ User authentication system (JWT-based)
+✅ User registration with email/password
+✅ Login/logout functionality
+✅ Protected dashboard route
+✅ Basic organization profile creation
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ installed
+- PostgreSQL database (local or cloud)
+- npm or yarn package manager
+
+### Installation
+
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Set up your database:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Update the `DATABASE_URL` in `.env` file with your PostgreSQL connection string:
+```
+DATABASE_URL="postgresql://user:password@localhost:5432/daraja_directory?schema=public"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Run Prisma migrations:
+```bash
+npx prisma migrate dev --name init
+```
 
-## Learn More
+4. Generate Prisma Client:
+```bash
+npx prisma generate
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. Start the development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+daraja-directory/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/auth/          # Authentication API routes
+│   │   ├── dashboard/         # Protected dashboard pages
+│   │   ├── login/             # Login page
+│   │   ├── register/          # Registration page
+│   │   └── page.tsx           # Homepage
+│   ├── components/
+│   │   └── auth/              # Auth-related components
+│   └── lib/
+│       ├── db.ts              # Prisma client
+│       ├── auth.ts            # Auth utilities
+│       ├── validations.ts     # Zod schemas
+│       ├── constants.ts       # App constants
+│       └── store/             # Zustand stores
+├── prisma/
+│   └── schema.prisma          # Database schema
+└── .env                       # Environment variables
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Features Implemented
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Authentication
+- User registration with organization details
+- Email/password login
+- JWT token-based authentication
+- HTTP-only cookies for security
+- Protected routes with auth middleware
+- Logout functionality
+
+### Database Models
+- User (with role-based access)
+- Organization (with tier system)
+- Document uploads
+- Payment tracking
+- Verification status workflow
+
+### UI Components
+- Registration form with validation
+- Login form
+- Dashboard layout
+- Responsive design with Tailwind CSS
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT with bcryptjs
+- **Form Validation**: Zod + React Hook Form
+- **State Management**: Zustand
+
+## Database Schema
+
+### User
+- Email, password (hashed)
+- Role (PUBLIC, NGO_USER, ADMIN)
+- Email verification status
+- One-to-one relationship with Organization
+
+### Organization
+- Basic info (name, description, contact)
+- Location (county, sub-county)
+- Tier (BASIC_FREE, SELF_ASSESSMENT, DARAJA_VERIFIED)
+- Verification status
+- Sectors and SDGs
+- Documents and payments
+
+## Next Steps (Phase 2)
+
+- [ ] Organization profile editing
+- [ ] Document upload functionality
+- [ ] Public directory listing
+- [ ] Search and filter implementation
+- [ ] Organization detail pages
+
+## Environment Variables
+
+Required variables in `.env`:
+
+```
+DATABASE_URL="postgresql://..."
+JWT_SECRET="your-secret-key"
+JWT_EXPIRES_IN="7d"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+## Development Commands
+
+```bash
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Run Prisma Studio (database GUI)
+npx prisma studio
+
+# Create new migration
+npx prisma migrate dev --name migration_name
+
+# Reset database
+npx prisma migrate reset
+```
+
+## Testing the Application
+
+1. Visit http://localhost:3000
+2. Click "List Your Organization" or "Register"
+3. Fill in the registration form
+4. After registration, login with your credentials
+5. Access the dashboard at /dashboard
+
+## Troubleshooting
+
+### Database Connection Issues
+- Ensure PostgreSQL is running
+- Verify DATABASE_URL is correct
+- Run `npx prisma migrate dev` to apply migrations
+
+### Module Not Found Errors
+- Run `npm install` to ensure all dependencies are installed
+- Check that `@/` path alias is configured in `tsconfig.json`
+
+### Authentication Issues
+- Clear browser cookies
+- Check JWT_SECRET is set in .env
+- Verify API routes are accessible
+
+## License
+
+MIT
